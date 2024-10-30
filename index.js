@@ -1,47 +1,62 @@
-const express = require("express"); //import the express
-const path = require("path");
-// const morgan = require("morgan");
-require("dotenv").config();
-require("./config/passport-setup");
-const session = require("express-session"); //import session
-const passport = require("passport");
-const { v4: uuidv4 } = require("uuid"); //import unique id
-const connectDB = require("./config/db");
+/**
+ * @file index.js
+ * @description Main entry point for the Express application.
+ * This file initializes the server, configures middleware, and sets up routes for the application.
+ * @requires express
+ * @requires path
+ * @requires dotenv
+ * @requires express-session
+ * @requires passport
+ * @requires uuid
+ * @requires connectDB
+ * @requires authRoutes
+ * @requires homeRoutes
+ */
 
-const authRouter = require("./routes/authRoutes");
-const homeRouter = require("./routes/homeRoutes");
+const express = require("express"); // Import the express framework
+const path = require("path"); // Import the path module for handling file paths
+// const morgan = require("morgan"); // Uncomment for HTTP request logging
+require("dotenv").config(); // Load environment variables from .env file
+require("./config/passport-setup"); // Initialize Passport configuration
+const session = require("express-session"); // Import express-session for session handling
+const passport = require("passport"); // Import Passport for authentication
+const { v4: uuidv4 } = require("uuid"); // Import uuid for generating unique session IDs
+const connectDB = require("./config/db"); // Import the database connection function
 
-const app = express();
+const authRouter = require("./routes/authRoutes"); // Import authentication routes
+const homeRouter = require("./routes/homeRoutes"); // Import home routes
 
-//for port number
-const port = process.env.PORT || 3000;
-const domain = process.env.DOMAIN_NAME;
+const app = express(); // Create an Express application
 
-// connect with mongoDB
+// Set the port number
+const port = process.env.PORT || 3000; // Default to port 3000 if not specified
+const domain = process.env.DOMAIN_NAME; // Domain name from environment variables
+
+// Connect to MongoDB
 connectDB();
 
-//for setting view engine (ejs)
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "ejs");
+// Set up the view engine (EJS)
+app.set("views", path.join(__dirname, "views")); // Specify the views directory
+app.set("view engine", "ejs"); // Set EJS as the templating engine
 
-//middlewares
-app.use(express.json()); //for parse to json
-app.use(express.urlencoded({ extended: true })); // for url encode
+// Middleware configuration
+app.use(express.json()); // Parse incoming JSON requests
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded requests
 
-// session handling
+// Session handling middleware
 app.use(
   session({
-    secret: uuidv4(),
-    resave: false,
-    saveUninitialized: false,
+    secret: uuidv4(), // Use a unique session ID
+    resave: false, // Prevent session re-saving if unmodified
+    saveUninitialized: false, // Do not save uninitialized sessions
   })
 );
 
-// Initialize Passport
+// Initialize Passport for authentication
 app.use(passport.initialize());
 app.use(passport.session());
 
-//for cache handling
+// Cache control middleware
 app.use((req, res, next) => {
   res.set(
     "Cache-Control",
@@ -50,26 +65,25 @@ app.use((req, res, next) => {
   res.set("Pragma", "no-cache");
   res.set("Expires", "0");
   res.set("Surrogate-Control", "no-store");
-  next();
+  next(); // Call the next middleware in the stack
 });
 
 // Middleware to serve static files
-app.use("/public", express.static(path.join(__dirname, "public")));
+app.use("/public", express.static(path.join(__dirname, "public"))); // Serve static files from the public directory
 
-//for morgan middleware for auditing the requests
-// app.use(
-//   morgan(":method :url :status :res[content-length] - :response-time ms")
-// );
+// Uncomment to use morgan for request logging
+// app.use(morgan(":method :url :status :res[content-length] - :response-time ms"));
 
-app.use("/auth", authRouter); // for authentication router url
-app.use("/", homeRouter);
+// Define application routes
+app.use("/auth", authRouter); // Authentication routes
+app.use("/", homeRouter); // Home routes
 
-// Catch 404 and forward to error handler
+// Catch 404 errors and forward to error handler
 app.use((req, res, next) => {
-  res.status(404).render("_404");
+  res.status(404).render("_404"); // Render 404 error page
 });
 
-//server listener
+// Start the server
 app.listen(port, () => {
-  console.log(`The server started at ${domain}:${port}`);
+  console.log(`The server started at ${domain}:${port}`); // Log the server start message
 });

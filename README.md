@@ -58,11 +58,16 @@ The Google Authentication API is designed to provide secure user authentication 
 ### Configuration
 
 1. Create a `.env` file in the root directory and add the following environment variables:
+
    ```plaintext
    GOOGLE_CLIENT_ID=your_google_client_id
    GOOGLE_CLIENT_SECRET=your_google_client_secret
-   COOKIE_SECRET=your_cookie_secret
+   DOMAIN_NAME=http://localhost
+   PORT=3000
+   mongoDbUri=your_mongodb_connection_string
+
    ```
+
 2. Go to the Google Cloud Console:
    - Create a new project.
    - Navigate to "APIs & Services" -> "Credentials".
@@ -85,29 +90,64 @@ Open your browser and navigate to [http://localhost:3000](http://localhost:3000)
 ```plaintext
 google-auth-api/
 ├── config/
+│   └── db.js
 │   └── passport-setup.js
+├── controllers/
+│   └── authControllers.js
+├── models/
+│   └── User.js
+├── node_modules/
 ├── routes/
-│   └── auth-routes.js
+│   └── authRoutes.js
+│   └── homeRoutes.js
+├── views/
+│   └── _404.ejs
+│   └── _500.ejs
+│   └── home.ejs
 ├── .env
-├── app.js
+├── .gitignore
+├── index.js
+├── package-lock.json
 ├── package.json
+├── README.md
 ```
 
 ## API Endpoints
 
 ### Auth Routes
 
-- `GET /auth/google`: Redirects the user to Google's OAuth 2.0 consent screen.
-- `GET /auth/google/callback`: Handles the callback from Google and authenticates the user.
+- **`GET /auth/google/login`**: Redirects the user to Google’s OAuth 2.0 consent screen for login.
+- **`GET /auth/google/login/callback`**: Handles the callback from Google and authenticates the user for login.
+- **`GET /auth/google/signup`**: Redirects the user to Google’s OAuth 2.0 consent screen for signup.
+- **`GET /auth/google/signup/callback`**: Handles the callback from Google and authenticates the user for signup.
+- **`GET /auth/logout`**: Logs out the authenticated user and terminates the session.
 
 ## Frontend Usage
 
-### User Login
+### User Signup Workflow
 
-1. Navigate to `/auth/google`.
-2. You will be redirected to Google's OAuth 2.0 consent screen.
+1. Navigate to `/auth/google/signup`.
+2. You will be redirected to Google’s OAuth 2.0 consent screen.
+3. Sign up with your Google account.
+4. If the user does not already exist in the database, a new user record will be created.
+5. After successful signup, the user will be redirected back to the application.
+
+### User Login Workflow
+
+1. Navigate to `/auth/google/login`.
+2. You will be redirected to Google’s OAuth 2.0 consent screen.
 3. Log in with your Google account.
-4. After successful authentication, you will be redirected back to the application.
+4. If the user exists and is not blocked, they will be authenticated and redirected back to the application.
+5. If the user does not exist or is blocked, an error message will prompt the user to sign up or unblock the account.
+
+### User Logout Workflow
+
+1. Navigate to `/auth/logout`.
+2. The user's session will be terminated, logging them out from the application.
+
+---
+
+This documentation provides a structured outline for developers looking to integrate Google-based authentication in an Express application using Passport.js.
 
 ## Security Measures
 
